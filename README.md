@@ -23,6 +23,7 @@ A Django-based document management system with multi-tenant architecture, suppor
 
 **Project Structure**:
 ```
+📁 docmanager
 ├── 📁 docmanager
 │   ├── 🐍 __init__.py
 │   ├── 🐍 asgi.py
@@ -442,5 +443,6 @@ For issues and questions:
 - Consult [Django](https://www.djangoproject.com/) documentation for framework-specific questions
 
 ---
+
 
 

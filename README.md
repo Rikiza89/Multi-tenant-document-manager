@@ -27,70 +27,6 @@ A Django-based document management system with multi-tenant architecture, suppor
 - Django 4.2+ (tested with Django 5.2.5) 
 - PostgreSQL (for production) or SQLite (for development)
 
-
-**Project Structure**:
-```
-📁 docmanager
-├── 📁 docmanager
-│   ├── 🐍 __init__.py
-│   ├── 🐍 asgi.py
-│   ├── 🐍 settings.py
-│   ├── 🐍 urls.py
-│   └── 🐍 wsgi.py
-├── 📁 documents
-│   ├── 📁 migrations
-│   │   └── 🐍 __init__.py
-│   ├── 🐍 __init__.py
-│   ├── 🐍 admin.py
-│   ├── 🐍 apps.py
-│   ├── 🐍 forms.py
-│   ├── 🐍 models.py
-│   ├── 🐍 permissions.py
-│   ├── 🐍 tests.py
-│   ├── 🐍 urls.py
-│   ├── 🐍 utils.py
-│   └── 🐍 views.py
-├── 📁 media
-├── 📁 static
-│   └── 📁 css
-│       └── 🎨 style.css
-├── 📁 templates
-│   ├── 📁 documents
-│   │   ├── 🌐 delete_confirm.html
-│   │   ├── 🌐 detail.html
-│   │   ├── 🌐 folder_create.html
-│   │   ├── 🌐 folder_list.html
-│   │   ├── 🌐 folder_tree.html
-│   │   ├── 🌐 folder_tree_recursive.html
-│   │   ├── 🌐 list.html
-│   │   ├── 🌐 login.html
-│   │   ├── 🌐 preview.html
-│   │   └── 🌐 upload.html
-│   ├── 📁 tenants
-│   │   └── 🌐 list.html
-│   └── 🌐 base.html
-├── 📁 tenants
-│   ├── 📁 management
-│   │   ├── 📁 commands
-│   │   │   ├── 🐍 __init__.py
-│   │   │   └── 🐍 create_tenant.py
-│   │   └── 🐍 __init__.py
-│   ├── 📁 migrations
-│   │   └── 🐍 __init__.py
-│   ├── 🐍 __init__.py
-│   ├── 🐍 admin.py
-│   ├── 🐍 apps.py
-│   ├── 🐍 context_processors.py
-│   ├── 🐍 middleware.py
-│   ├── 🐍 models.py
-│   ├── 🐍 tests.py
-│   ├── 🐍 urls.py
-│   └── 🐍 views.py
-├── ⚙️ .env.example
-├── 🐍 manage.py
-└── 📄 requirements.txt
-```
-
 ## Installation
 
 ### 1. Clone and Setup
@@ -246,35 +182,69 @@ SET search_path TO tenant1, public;
 Document.objects.filter(tenant=current_tenant)
 ```
 
-## Project Structure
+**Project Structure**:
+```
+📁 docmanager
+├── 📁 docmanager
+│   ├── 🐍 __init__.py
+│   ├── 🐍 asgi.py
+│   ├── 🐍 settings.py
+│   ├── 🐍 urls.py
+│   └── 🐍 wsgi.py
+├── 📁 documents
+│   ├── 📁 migrations
+│   │   └── 🐍 __init__.py
+│   ├── 🐍 __init__.py
+│   ├── 🐍 admin.py
+│   ├── 🐍 apps.py
+│   ├── 🐍 forms.py
+│   ├── 🐍 models.py
+│   ├── 🐍 permissions.py
+│   ├── 🐍 tests.py
+│   ├── 🐍 urls.py
+│   ├── 🐍 utils.py
+│   └── 🐍 views.py
+├── 📁 media
+├── 📁 static
+│   └── 📁 css
+│       └── 🎨 style.css
+├── 📁 templates
+│   ├── 📁 documents
+│   │   ├── 🌐 delete_confirm.html
+│   │   ├── 🌐 detail.html
+│   │   ├── 🌐 folder_create.html
+│   │   ├── 🌐 folder_list.html
+│   │   ├── 🌐 folder_tree.html
+│   │   ├── 🌐 folder_tree_recursive.html
+│   │   ├── 🌐 list.html
+│   │   ├── 🌐 login.html
+│   │   ├── 🌐 preview.html
+│   │   └── 🌐 upload.html
+│   ├── 📁 tenants
+│   │   └── 🌐 list.html
+│   └── 🌐 base.html
+├── 📁 tenants
+│   ├── 📁 management
+│   │   ├── 📁 commands
+│   │   │   ├── 🐍 __init__.py
+│   │   │   └── 🐍 create_tenant.py
+│   │   └── 🐍 __init__.py
+│   ├── 📁 migrations
+│   │   └── 🐍 __init__.py
+│   ├── 🐍 __init__.py
+│   ├── 🐍 admin.py
+│   ├── 🐍 apps.py
+│   ├── 🐍 context_processors.py
+│   ├── 🐍 middleware.py
+│   ├── 🐍 models.py
+│   ├── 🐍 tests.py
+│   ├── 🐍 urls.py
+│   └── 🐍 views.py
+├── ⚙️ .env.example
+├── 🐍 manage.py
+└── 📄 requirements.txt
+```
 
-```
-docmanager/
-├── docmanager/
-│   ├── settings.py
-│   ├── urls.py
-│   └── wsgi.py
-├── tenants/
-│   ├── models.py          # Tenant, TenantUser
-│   ├── middleware.py      # Tenant resolution
-│   └── management/commands/create_tenant.py
-├── documents/
-│   ├── models.py          # Folder, Document, ACL, AuditLog
-│   ├── views.py           # Views + preview logic
-│   ├── forms.py           # Upload/folder forms
-│   ├── permissions.py     # ACL enforcement
-│   └── utils.py           # File handling
-├── templates/
-│   ├── base.html
-│   └── documents/
-│       ├── folder_list.html
-│       ├── folder_tree.html
-│       ├── folder_tree_recursive.html
-│       ├── preview.html   # Multi-format preview
-│       ├── upload.html
-│       └── detail.html
-└── static/css/style.css
-```
 
 ## API Reference
 
@@ -397,6 +367,7 @@ For issues and questions:
 - Consult [Django](https://www.djangoproject.com/) documentation for framework-specific questions
 
 ---
+
 
 
 

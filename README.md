@@ -7,11 +7,18 @@ A Django-based document management system with multi-tenant architecture, suppor
 - **Multi-Tenant Architecture**: Shared database with tenant isolation
   - PostgreSQL: Schema-based separation
   - SQLite: Tenant ID-based filtering
+- **Hierarchical Folder Management**: Multi-level folder organization with collapsible tree view
 - **Document Management**: Upload, search, view metadata, and download documents
-- **Access Control**: Multi-level permissions (roles, groups, per-file ACLs)
+- **Advanced Preview System**: In-browser preview for 40+ file types
+  - PDFs, images, videos, audio
+  - Code files with syntax highlighting (Python, JS, Java, etc.)
+  - Office documents (Word, Excel, PowerPoint)
+  - 3D models (STL, OBJ)
+  - Text files, JSON, XML, YAML, Markdown
+- **Access Control**: Multi-level permissions (roles, groups, per-folder/file ACLs)
 - **File Deduplication**: SHA256 checksum-based duplicate detection
 - **Audit Logging**: Complete audit trail of all document operations
-- **Responsive UI**: Clean, minimal interface with no heavy frontend frameworks
+- **Responsive UI**: Clean, minimal interface with interactive tree navigation
 - **Security**: File validation, permission enforcement, CSRF protection
 
 ## Requirements
@@ -51,8 +58,13 @@ A Django-based document management system with multi-tenant architecture, suppor
 │   ├── 📁 documents
 │   │   ├── 🌐 delete_confirm.html
 │   │   ├── 🌐 detail.html
+│   │   ├── 🌐 folder_create.html
+│   │   ├── 🌐 folder_list.html
+│   │   ├── 🌐 folder_tree.html
+│   │   ├── 🌐 folder_tree_recursive.html
 │   │   ├── 🌐 list.html
 │   │   ├── 🌐 login.html
+│   │   ├── 🌐 preview.html
 │   │   └── 🌐 upload.html
 │   ├── 📁 tenants
 │   │   └── 🌐 list.html
@@ -75,8 +87,6 @@ A Django-based document management system with multi-tenant architecture, suppor
 │   ├── 🐍 urls.py
 │   └── 🐍 views.py
 ├── ⚙️ .env.example
-├── 📄 LICENSE
-├── 📝 README.md
 ├── 🐍 manage.py
 └── 📄 requirements.txt
 ```
@@ -86,27 +96,18 @@ A Django-based document management system with multi-tenant architecture, suppor
 ### 1. Clone and Setup
 
 ```bash
-# Clone the repository
 git clone <repository-url>
 cd docmanager
-
-# Create virtual environment
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
 ### 2. Configure Environment
 
-Create a `.env` file in the project root:
+Copy `.env.example` to `.env`:
 
-```bash
-cp .env.example .env
-```
-
-For **SQLite (Development)**:
+**SQLite (Development)**:
 ```env
 DATABASE_ENGINE=django.db.backends.sqlite3
 DATABASE_NAME=db.sqlite3
@@ -114,9 +115,11 @@ SECRET_KEY=your-secret-key-here
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1,.localhost
 TENANT_UNIQUENESS=global
+MAX_UPLOAD_SIZE=52428800
+ALLOWED_FILE_TYPES=pdf,doc,docx,txt,rtf,odt,csv,xls,xlsx,ppt,pptx,md,json,yaml,xml,png,jpg,jpeg,gif,svg,mp3,mp4,py,js,html,css,sql,java,cpp,c,go,rs,php
 ```
 
-For **PostgreSQL (Production)**:
+**PostgreSQL (Production)**:
 ```env
 DATABASE_ENGINE=django.db.backends.postgresql
 DATABASE_NAME=docmanager
@@ -127,304 +130,255 @@ DATABASE_PORT=5432
 SECRET_KEY=your-secret-key-here
 DEBUG=False
 ALLOWED_HOSTS=yourdomain.com,.yourdomain.com
-TENANT_UNIQUENESS=global
 ```
 
-### 3. Run Migrations
+### 3. Initialize Database
 
 ```bash
-# Create database tables
 python manage.py migrate
-
-# Create superuser for admin access
 python manage.py createsuperuser
 ```
 
 ### 4. Create Tenants
 
 ```bash
-# Create first tenant
 python manage.py create_tenant "Company A" --domain=companya
-
-# Create second tenant
 python manage.py create_tenant "Company B" --domain=companyb
 ```
 
-For PostgreSQL, this will:
-- Create a dedicated schema for each tenant
-- Run migrations within the schema
+### 5. Setup Users
 
-For SQLite, this will:
-- Create a tenant record
-- Enable tenant-based filtering
+Access admin at `http://localhost:8000/admin/`:
+1. Create users (Authentication > Users)
+2. Link to tenants (Tenants > Tenant users)
+3. Assign roles (Documents > Roles)
 
-### 5. Create Users and Assign Roles
-
-```bash
-# Access Django admin
-python manage.py runserver
-# Navigate to http://localhost:8000/admin/
-
-# Create users and assign them to tenants via TenantUser
-# Assign roles via the Role model
-```
-
-## Running the Application
-
-### Development (SQLite)
+### 6. Run Application
 
 ```bash
 python manage.py runserver
 ```
 
-Access tenants via:
-- http://companya.localhost:8000
-- http://companyb.localhost:8000
-
-### Production (PostgreSQL)
-
-```bash
-# Collect static files
-python manage.py collectstatic
-
-# Run with Gunicorn
-gunicorn docmanager.wsgi:application --bind 0.0.0.0:8000
-```
-
-Configure your web server (Nginx/Apache) to handle tenant routing via subdomains.
+Access: `http://companya.localhost:8000`
 
 ## Usage Guide
 
-### Document Upload
+### Folder Management
 
-1. Login to your tenant domain
-2. Click "Upload Document"
-3. Fill in document details:
-   - Title (required)
-   - Description (optional)
-   - Tags (comma-separated, optional)
-   - File (required)
-4. Click "Upload"
+**Creating Folders**:
+- Navigate to parent folder or root
+- Click "+ Folder"
+- Enter name and submit
+- Appears in tree view sidebar
 
-**File Validation**:
-- Maximum size: 50MB (configurable)
-- Allowed types: pdf, doc, docx, txt, xls, xlsx, png, jpg, jpeg
+**Navigation**:
+- **Tree View**: Collapsible sidebar shows full hierarchy
+- **Breadcrumbs**: Path navigation at top
+- **Main Area**: Grid view of folders and files
 
-### File Deduplication
+**Folder Permissions** (inherited by children):
+- **Read**: View folder contents
+- **Write**: Create subfolders and upload files
+- **Delete**: Remove folder
 
-The system automatically detects duplicate files using SHA256 checksums:
+### Document Management
 
-- **Global mode** (`TENANT_UNIQUENESS=global`): Prevents duplicates across all tenants
-- **Per-tenant mode** (`TENANT_UNIQUENESS=per_tenant`): Allows same file in different tenants
+**Uploading**:
+1. Navigate to target folder
+2. Click "+ Upload"
+3. Select folder (if applicable)
+4. Fill metadata: title, description, tags
+5. Choose file
+6. Submit
+
+**Previewing Documents**:
+- Click "👁 Preview" button to open in new tab
+- Supports 40+ file types:
+  - **PDFs**: Native browser viewer
+  - **Images**: PNG, JPG, GIF, SVG, WebP, TIFF
+  - **Videos**: MP4, WebM, MKV, AVI, MOV
+  - **Audio**: MP3, WAV, OGG, FLAC
+  - **Code**: Python, JavaScript, TypeScript, Java, C++, Go, Rust, PHP, SQL (with syntax highlighting)
+  - **Office**: Word, Excel, PowerPoint (via Office Online)
+  - **3D Models**: STL, OBJ (interactive Three.js viewer)
+  - **Text**: TXT, MD, JSON, XML, YAML, CSV, HTML, CSS
+  - **Notebooks**: Jupyter (.ipynb)
+
+**Search & Filter**:
+- Search by title, description, filename
+- Filter by tags
+- Navigate via tree view
 
 ### Access Control
 
-**Three-level permission system**:
+**Four-Level Permission System**:
 
-1. **Roles** (tenant-wide):
-   - Admin: Full access to all documents
-   - Editor: Read, download, and edit documents
-   - Viewer: Read-only access
+1. **Roles (Tenant-Wide)**:
+   - Admin: Full access
+   - Editor: Read, download, edit
+   - Viewer: Read-only
 
-2. **Groups**: Organize users and assign permissions collectively
+2. **Folder ACLs**:
+   - Read, Write, Delete
+   - Inherited by subfolders
 
-3. **ACLs** (per-document):
-   - Read: View metadata
-   - Download: Download file
-   - Edit: Modify document
-   - Delete: Remove document
+3. **Document ACLs**:
+   - Read, Download, Edit, Delete
+   - Per-file granular control
 
-### Searching Documents
+4. **Groups**: Collective permission assignment
 
-Use the search bar to find documents by:
-- Title
-- Description
-- Original filename
-- Tags
+### File Deduplication
+
+- **Global mode**: Prevents duplicates across tenants
+- **Per-tenant mode**: Allows duplicates per tenant
+- SHA256 checksum-based detection
 
 ## Multi-Tenancy Implementation
 
-### PostgreSQL Mode
-
-```python
-# Tenant middleware sets schema per request
+**PostgreSQL**: Schema-based isolation
+```sql
 SET search_path TO tenant1, public;
 ```
 
-Each tenant gets an isolated schema with complete data separation.
-
-### SQLite Mode
-
+**SQLite**: ORM-level filtering (development only)
 ```python
-# All models include tenant foreign key
-# Filtering happens at ORM level
-documents = Document.objects.filter(tenant=current_tenant)
+Document.objects.filter(tenant=current_tenant)
 ```
 
-Tenant isolation through application-level filtering.
+## Project Structure
 
-## API Structure
+```
+docmanager/
+├── docmanager/
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+├── tenants/
+│   ├── models.py          # Tenant, TenantUser
+│   ├── middleware.py      # Tenant resolution
+│   └── management/commands/create_tenant.py
+├── documents/
+│   ├── models.py          # Folder, Document, ACL, AuditLog
+│   ├── views.py           # Views + preview logic
+│   ├── forms.py           # Upload/folder forms
+│   ├── permissions.py     # ACL enforcement
+│   └── utils.py           # File handling
+├── templates/
+│   ├── base.html
+│   └── documents/
+│       ├── folder_list.html
+│       ├── folder_tree.html
+│       ├── folder_tree_recursive.html
+│       ├── preview.html   # Multi-format preview
+│       ├── upload.html
+│       └── detail.html
+└── static/css/style.css
+```
 
-### Models
+## API Reference
 
-- **Tenant**: Represents a tenant organization
-- **TenantUser**: Links users to tenants
-- **Role**: User roles within tenants
-- **Group**: User groups for collective permissions
-- **StoredFile**: Physical file with checksum
-- **Document**: Document metadata linked to tenant
-- **ACL**: Access control entries
-- **AuditLog**: Activity audit trail
+**Models**:
+- Tenant, TenantUser, Role, Group
+- Folder, FolderACL (hierarchical structure)
+- StoredFile, Document, ACL
+- AuditLog
 
-### Views
+**Key Views**:
+- `folder_list`: Tree view + folder contents
+- `folder_create`, `folder_delete`
+- `document_upload`, `document_detail`
+- `document_preview`, `document_preview_content`: Multi-format preview
+- `document_download`, `document_delete`
 
-- `document_list`: List all accessible documents
-- `document_upload`: Upload new document
-- `document_detail`: View document details and ACLs
-- `document_download`: Download file (permission-checked)
-- `document_delete`: Delete document (permission-checked)
+## Security
 
-## Security Considerations
+### File Upload
+- Whitelist validation (40+ types)
+- Size limits (50MB default)
+- Storage outside web root
+- Checksum verification
 
-### File Upload Security
+### Permissions
+- Operation-level checks
+- Folder inheritance
+- Owner full access
+- Download requires explicit permission
 
-- File type validation (whitelist-based)
-- File size limits
-- Virus scanning (recommended to add)
-- Secure file storage outside web root
-
-### Permission Enforcement
-
-- All downloads require explicit permission
-- Decorator-based permission checks
-- Owner always has full access
-- Role-based access control
-
-### Database Security
-
-- PostgreSQL: Schema isolation prevents cross-tenant queries
-- SQLite: Application-level filtering (less secure, dev only)
-- Prepared statements prevent SQL injection
-- CSRF protection enabled
+### Database
+- PostgreSQL: Schema isolation
+- SQL injection prevention
+- CSRF protection
+- Audit logging
 
 ### Production Checklist
-
 - [ ] Change SECRET_KEY
 - [ ] Set DEBUG=False
-- [ ] Configure ALLOWED_HOSTS
-- [ ] Use PostgreSQL (not SQLite)
+- [ ] Use PostgreSQL
 - [ ] Enable HTTPS
-- [ ] Configure file upload limits
-- [ ] Set up backup strategy
-- [ ] Enable access logging
-- [ ] Implement rate limiting
+- [ ] Configure backups
 - [ ] Add virus scanning
-- [ ] Configure email notifications
+- [ ] Implement rate limiting
 
 ## Testing
 
-Run the test suite:
-
 ```bash
-# Run all tests
 python manage.py test
-
-# Run specific test class
-python manage.py test documents.tests.ACLTestCase
-
-# Run with coverage
-pip install coverage
-coverage run --source='.' manage.py test
-coverage report
+python manage.py test documents.tests.FolderTestCase
 ```
 
-**Test Coverage**:
-- Multi-tenancy isolation
-- File deduplication (global and per-tenant)
-- ACL permissions
-- Role-based access
-- Audit logging
-
-## Database Migration Guide
-
-### SQLite to PostgreSQL Migration
-
-1. **Backup SQLite data**:
-```bash
-python manage.py dumpdata > backup.json
-```
-
-2. **Update .env for PostgreSQL**:
-```env
-DATABASE_ENGINE=django.db.backends.postgresql
-DATABASE_NAME=docmanager
-DATABASE_USER=postgres
-DATABASE_PASSWORD=yourpassword
-```
-
-3. **Create PostgreSQL database**:
-```sql
-CREATE DATABASE docmanager;
-```
-
-4. **Run migrations**:
-```bash
-python manage.py migrate
-```
-
-5. **Create schemas for existing tenants**:
-```bash
-# For each tenant in backup
-python manage.py create_tenant "Tenant Name" --domain=tenantdomain
-```
-
-6. **Load data** (with caution):
-```bash
-python manage.py loaddata backup.json
-```
-
-Note: Files must be manually copied to new MEDIA_ROOT location.
+Coverage: Multi-tenancy, folders, ACLs, deduplication, audit logs
 
 ## Troubleshooting
 
-### Tenant Not Found
-
-- Ensure tenant domain matches exactly
-- Check ALLOWED_HOSTS includes `.localhost` for development
-- Verify tenant is active (`is_active=True`)
-
-### Permission Denied
-
-- Check user has TenantUser record for current tenant
-- Verify Role assignment
-- Check document ACLs
-
-### File Upload Fails
-
-- Verify MEDIA_ROOT directory exists and is writable
-- Check file size and type restrictions
-- Review application logs
-
-### PostgreSQL Schema Issues
-
-```bash
-# List all schemas
-psql -d docmanager -c "\dn"
-
-# Check search_path
-SELECT current_schemas(true);
-
-# Manually set schema
-SET search_path TO tenant1, public;
+**Subdomain Issues**:
+Edit hosts file:
+```
+127.0.0.1 companya.localhost
+127.0.0.1 companyb.localhost
 ```
 
-## Contributing
+Or enable development mode in `tenants/middleware.py`
 
-1. Fork the repository
-2. Create a feature branch
-3. Write tests for new features
-4. Ensure all tests pass
-5. Submit a pull request
+**Preview Not Working**:
+- Check file permissions
+- Verify MIME type detection
+- Review browser console
+
+**Permission Denied**:
+- Verify TenantUser record
+- Check Role assignment
+- Review folder/document ACLs
+
+## Database Migration (SQLite → PostgreSQL)
+
+```bash
+# Backup
+python manage.py dumpdata > backup.json
+
+# Update .env to PostgreSQL
+# Create database
+createdb docmanager
+
+# Migrate
+python manage.py migrate
+
+# Recreate tenants
+python manage.py create_tenant "Company A" --domain=companya
+
+# Load data
+python manage.py loaddata backup.json
+```
+---
+
+**Key Capabilities**:
+- ✅ Multi-tenant (PostgreSQL/SQLite)
+- ✅ Hierarchical folders with tree view
+- ✅ 40+ file type preview
+- ✅ Granular permissions (folders + documents)
+- ✅ File deduplication (SHA256)
+- ✅ Audit logging
+- ✅ Production-ready security
 
 ## 🪪 License
 
@@ -443,6 +397,7 @@ For issues and questions:
 - Consult [Django](https://www.djangoproject.com/) documentation for framework-specific questions
 
 ---
+
 
 
 

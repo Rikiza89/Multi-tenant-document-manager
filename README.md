@@ -16,32 +16,68 @@ A Django-based document management system with multi-tenant architecture, suppor
 
 ## Requirements
 
-- Python 3.11+
-- Django 4.2+
+- Python 3.11+ (tested with python 3.11.9)
+- Django 4.2+ (tested with Django 5.2.5) 
 - PostgreSQL (for production) or SQLite (for development)
 
 
 **Project Structure**:
 ```
-docmanager/
-├── docmanager/          # Project settings
-│   ├── settings.py      # Configuration
-│   ├── urls.py          # URL routing
-│   └── wsgi.py          # WSGI application
-├── tenants/             # Multi-tenancy app
-│   ├── models.py        # Tenant models
-│   ├── middleware.py    # Tenant resolution
-│   └── management/      # Tenant commands
-├── documents/           # Document management
-│   ├── models.py        # Document models
-│   ├── views.py         # Views
-│   ├── forms.py         # Forms
-│   ├── permissions.py   # ACL logic
-│   └── utils.py         # Utilities
-├── templates/           # HTML templates
-├── static/              # CSS/JS files
-├── media/               # Uploaded files
-└── requirements.txt     # Dependencies
+├── 📁 docmanager
+│   ├── 🐍 __init__.py
+│   ├── 🐍 asgi.py
+│   ├── 🐍 settings.py
+│   ├── 🐍 urls.py
+│   └── 🐍 wsgi.py
+├── 📁 documents
+│   ├── 📁 migrations
+│   │   └── 🐍 __init__.py
+│   ├── 🐍 __init__.py
+│   ├── 🐍 admin.py
+│   ├── 🐍 apps.py
+│   ├── 🐍 forms.py
+│   ├── 🐍 models.py
+│   ├── 🐍 permissions.py
+│   ├── 🐍 tests.py
+│   ├── 🐍 urls.py
+│   ├── 🐍 utils.py
+│   └── 🐍 views.py
+├── 📁 media
+├── 📁 static
+│   └── 📁 css
+│       └── 🎨 style.css
+├── 📁 templates
+│   ├── 📁 documents
+│   │   ├── 🌐 delete_confirm.html
+│   │   ├── 🌐 detail.html
+│   │   ├── 🌐 list.html
+│   │   ├── 🌐 login.html
+│   │   └── 🌐 upload.html
+│   ├── 📁 tenants
+│   │   └── 🌐 list.html
+│   └── 🌐 base.html
+├── 📁 tenants
+│   ├── 📁 management
+│   │   ├── 📁 commands
+│   │   │   ├── 🐍 __init__.py
+│   │   │   └── 🐍 create_tenant.py
+│   │   └── 🐍 __init__.py
+│   ├── 📁 migrations
+│   │   └── 🐍 __init__.py
+│   ├── 🐍 __init__.py
+│   ├── 🐍 admin.py
+│   ├── 🐍 apps.py
+│   ├── 🐍 context_processors.py
+│   ├── 🐍 middleware.py
+│   ├── 🐍 models.py
+│   ├── 🐍 tests.py
+│   ├── 🐍 urls.py
+│   └── 🐍 views.py
+├── ⚙️ .env.example
+├── 📄 LICENSE
+├── 📝 README.md
+├── 🐍 manage.py
+└── 📄 requirements.txt
 ```
 
 ## Installation
@@ -406,4 +442,5 @@ For issues and questions:
 - Consult [Django](https://www.djangoproject.com/) documentation for framework-specific questions
 
 ---
+
 

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ document.title }} - Document Manager{% endblock %}
+
+{% block content %}
+<h2>Delete Document</h2>
+
+<div class="card">
+    <p style="margin-bottom: 1.5rem;">Are you sure you want to delete <strong>{{ document.title }}</strong>?</p>
+    <p style="color: #e74c3c; margin-bottom: 1.5rem;"><strong>Warning:</strong> This action cannot be undone.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-danger">Yes, Delete</button>
+            <a href="{% url 'documents:detail' document.id %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

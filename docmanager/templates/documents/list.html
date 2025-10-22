@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Documents - Document Manager{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>Documents</h2>
+    <a href="{% url 'documents:upload' %}" class="btn">+ Upload Document</a>
+</div>
+
+<div class="card">
+    <form method="get" style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+        <input type="text" name="query" placeholder="Search documents..." 
+               value="{{ request.GET.query }}" class="form-input" style="flex: 1;">
+        <input type="text" name="tags" placeholder="Filter by tags" 
+               value="{{ request.GET.tags }}" class="form-input" style="width: 200px;">
+        <button type="submit" class="btn">Search</button>
+    </form>
+
+    {% if documents %}
+    <table>
+        <thead>
+            <tr>
+                <th>Title</th>
+                <th>Original Filename</th>
+                <th>Uploaded By</th>
+                <th>Uploaded At</th>
+                <th>Size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for doc in documents %}
+            <tr>
+                <td><strong>{{ doc.title }}</strong></td>
+                <td>{{ doc.original_filename }}</td>
+                <td>{{ doc.uploaded_by.username }}</td>
+                <td>{{ doc.uploaded_at|date:"Y-m-d H:i" }}</td>
+                <td>{{ doc.stored_file.file_size|filesizeformat }}</td>
+                <td>
+                    <a href="{% url 'documents:detail' doc.id %}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">No documents found. Upload your first document!</p>
+    {% endif %}
+</div>
+{% endblock %}

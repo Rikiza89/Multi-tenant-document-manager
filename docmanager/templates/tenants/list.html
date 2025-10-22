@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Tenants - Document Manager{% endblock %}
+
+{% block content %}
+<h2>Tenants</h2>
+
+<div class="card">
+    {% if tenants %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Schema Name</th>
+                <th>Domain</th>
+                <th>Status</th>
+                <th>Created At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tenant in tenants %}
+            <tr>
+                <td><strong>{{ tenant.name }}</strong></td>
+                <td>{{ tenant.schema_name }}</td>
+                <td>{{ tenant.domain }}</td>
+                <td>
+                    {% if tenant.is_active %}
+                    <span style="color: #27ae60;">●</span> Active
+                    {% else %}
+                    <span style="color: #e74c3c;">●</span> Inactive
+                    {% endif %}
+                </td>
+                <td>{{ tenant.created_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="text-align: center; color: #999; padding: 2rem;">No tenants found</p>
+    {% endif %}
+</div>
+{% endblock %}

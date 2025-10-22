@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ document.title }} - Document Manager{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+    <h2>{{ document.title }}</h2>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if can_download %}
+        <a href="{% url 'documents:download' document.id %}" class="btn">⬇ Download</a>
+        {% endif %}
+        {% if can_delete %}
+        <a href="{% url 'documents:delete' document.id %}" class="btn btn-danger">Delete</a>
+        {% endif %}
+        <a href="{% url 'documents:list' %}" class="btn btn-secondary">Back</a>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Document Information</h3>
+    <table style="margin-top: 1rem;">
+        <tr>
+            <th style="width: 200px;">Original Filename</th>
+            <td>{{ document.original_filename }}</td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ document.description|default:"No description" }}</td>
+        </tr>
+        <tr>
+            <th>Tags</th>
+            <td>{{ document.tags|default:"No tags" }}</td>
+        </tr>
+        <tr>
+            <th>File Size</th>
+            <td>{{ document.stored_file.file_size|filesizeformat }}</td>
+        </tr>
+        <tr>
+            <th>MIME Type</th>
+            <td>{{ document.stored_file.mime_type }}</td>
+        </tr>
+        <tr>
+            <th>Checksum (SHA256)</th>
+            <td style="font-family: monospace; font-size: 0.875rem;">{{ document.stored_file.checksum }}</td>
+        </tr>
+        <tr>
+            <th>Uploaded By</th>
+            <td>{{ document.uploaded_by.username }}</td>
+        </tr>
+        <tr>
+            <th>Uploaded At</th>
+            <td>{{ document.uploaded_at|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+        <tr>
+            <th>Last Updated</th>
+            <td>{{ document.updated_at|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h3>Access Control List (ACL)</h3>
+    {% if acls %}
+    <table style="margin-top: 1rem;">
+        <thead>
+            <tr>
+                <th>User/Group</th>
+                <th>Permission</th>
+                <th>Granted By</th>
+                <th>Granted At</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for acl in acls %}
+            <tr>
+                <td>
+                    {% if acl.user %}
+                    👤 {{ acl.user.username }}
+                    {% else %}
+                    👥 {{ acl.group.name }}
+                    {% endif %}
+                </td>
+                <td>{{ acl.get_permission_display }}</td>
+                <td>{{ acl.granted_by.username|default:"System" }}</td>
+                <td>{{ acl.granted_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999; margin-top: 1rem;">No ACL entries</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Recent Activity</h3>
+    {% if logs %}
+    <table style="margin-top: 1rem;">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Action</th>
+                <th>Timestamp</th>
+                <th>IP Address</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.user.username|default:"Unknown" }}</td>
+                <td>{{ log.get_action_display }}</td>
+                <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+                <td style="font-family: monospace; font-size: 0.875rem;">{{ log.ip_address|default:"-" }}</td>
+                <td>{{ log.details|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999; margin-top: 1rem;">No activity logs</p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+{% load static %}
+<div class="tree-view">
+    <h3 style="margin-bottom: 1rem; font-size: 1rem;">📁 Folder Tree</h3>
+    <div class="tree-item {% if not current_folder %}active{% endif %}">
+        <a href="{% url 'documents:list' %}">🏠 Root</a>
+    </div>
+    {% if folder_tree %}
+        {% include 'documents/folder_tree_recursive.html' with tree=folder_tree %}
+    {% else %}
+        <p style="color: #999; font-size: 0.9rem; margin-top: 0.5rem;">No folders yet</p>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.tree-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            const children = this.parentElement.nextElementSibling;
+            if (children && children.classList.contains('tree-children')) {
+                children.style.display = children.style.display === 'none' ? 'block' : 'none';
+                this.textContent = children.style.display === 'none' ? '▶' : '▼';
+            }
+        });
+    });
+});
+</script>

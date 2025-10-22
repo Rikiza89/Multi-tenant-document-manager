@@ -68,6 +68,65 @@ class Group(models.Model):
     def __str__(self):
         return f"{self.name} @ {self.tenant.name}"
 
+class Folder(models.Model):
+    """Hierarchical folder structure for organizing documents."""
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='folders')
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, 
+                               related_name='subfolders')
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    objects = TenantAwareManager()
+    
+    class Meta:
+        unique_together = ('tenant', 'parent', 'name')
+        ordering = ['name']
+    
+    def __str__(self):
+        return self.get_full_path()
+    
+    def get_full_path(self):
+        """Get full path like /folder1/folder2/folder3"""
+        if self.parent:
+            return f"{self.parent.get_full_path()}/{self.name}"
+        return f"/{self.name}"
+    
+    def get_ancestors(self):
+        """Get list of ancestor folders from root to parent."""
+        ancestors = []
+        folder = self.parent
+        while folder:
+            ancestors.insert(0, folder)
+            folder = folder.parent
+        return ancestors
+
+
+class FolderACL(models.Model):
+    """Access Control List for folders."""
+    READ = 'read'
+    WRITE = 'write'
+    DELETE = 'delete'
+    
+    PERMISSION_CHOICES = [
+        (READ, 'Read folder'),
+        (WRITE, 'Create/upload in folder'),
+        (DELETE, 'Delete folder'),
+    ]
+    
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, related_name='acls')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, null=True, blank=True)
+    permission = models.CharField(max_length=20, choices=PERMISSION_CHOICES)
+    granted_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, 
+                                  related_name='granted_folder_acls')
+    granted_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['folder', 'user']),
+            models.Index(fields=['folder', 'group']),
+        ]
 
 class StoredFile(models.Model):
     """
@@ -105,6 +164,8 @@ class StoredFile(models.Model):
 class Document(models.Model):
     """Document metadata with multi-tenant support."""
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name='documents')
+    folder = models.ForeignKey(Folder, on_delete=models.CASCADE, null=True, blank=True,
+                               related_name='documents')
     stored_file = models.ForeignKey(StoredFile, on_delete=models.CASCADE, 
                                     related_name='documents')
     title = models.CharField(max_length=255)

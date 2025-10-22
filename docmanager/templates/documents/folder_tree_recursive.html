@@ -1,0 +1,17 @@
+{% for item in tree %}
+<div class="tree-item {% if current_folder and current_folder.id == item.folder.id %}active{% endif %}">
+    {% if item.children %}
+    <span class="tree-toggle">▼</span>
+    {% else %}
+    <span style="display: inline-block; width: 20px;"></span>
+    {% endif %}
+    <a href="{% url 'documents:folder_list' item.folder.id %}">
+        📁 {{ item.folder.name }}
+    </a>
+</div>
+{% if item.children %}
+<div class="tree-children">
+    {% include 'documents/folder_tree_recursive.html' with tree=item.children %}
+</div>
+{% endif %}
+{% endfor %}

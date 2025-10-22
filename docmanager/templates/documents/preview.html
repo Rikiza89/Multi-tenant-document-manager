@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+
+{% block title %}Preview: {{ document.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        height: calc(100vh - 200px);
+        min-height: 600px;
+    }
+    .preview-frame {
+        width: 100%;
+        height: 100%;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background: white;
+    }
+    .preview-unsupported {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #666;
+    }
+    .text-preview {
+        width: 100%;
+        height: 100%;
+        padding: 2rem;
+        overflow: auto;
+        white-space: pre-wrap;
+        font-family: monospace;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2>{{ document.title }}</h2>
+    <div style="display: flex; gap: 0.5rem;">
+        {% if can_download %}
+        <a href="{% url 'documents:download' document.id %}" class="btn">⬇ Download</a>
+        {% endif %}
+        <a href="{% url 'documents:detail' document.id %}" class="btn btn-secondary">Details</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="preview-container">
+        {% if 'pdf' in mime_type %}
+            <iframe src="{% url 'documents:preview_content' document.id %}" class="preview-frame"></iframe>
+        
+        {% elif 'image' in mime_type or document.original_filename|lower|slice:"-4:" in '.svg.png.jpg.gif.bmp.ico' %}
+            <img src="{% url 'documents:preview_content' document.id %}" 
+                style="max-width: 100%; height: auto; display: block; margin: 0 auto;" 
+                alt="{{ document.original_filename }}">
+        
+        {% elif 'text' in mime_type or document.original_filename|lower|slice:"-3:" in '.md.py.js.ts.rb.go.rs.sh.c.h.sql.php.java.cpp.css.json.xml.yml.yaml.ini.log.env.conf.html.htm.txt.rtf.csv' or document.original_filename|lower|slice:"-4:" in '.jsx.tsx' %}
+            <div class="text-preview" id="text-content">Loading...</div>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css">
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+            <script>
+                fetch('{% url 'documents:preview_content' document.id %}')
+                    .then(r => r.text())
+                    .then(text => {
+                        const el = document.getElementById('text-content');
+                        el.textContent = text;
+                        // Auto-detect language and highlight
+                        const ext = '{{ document.original_filename }}'.split('.').pop().toLowerCase();
+                        const langMap = {
+                            'py': 'python', 'js': 'javascript', 'ts': 'typescript',
+                            'rb': 'ruby', 'java': 'java', 'cpp': 'cpp', 'c': 'c',
+                            'cs': 'csharp', 'go': 'go', 'rs': 'rust', 'php': 'php',
+                            'sql': 'sql', 'sh': 'bash', 'json': 'json', 'xml': 'xml',
+                            'html': 'html', 'css': 'css', 'md': 'markdown', 'yml': 'yaml',
+                            'yaml': 'yaml', 'dockerfile': 'dockerfile'
+                        };
+                        if (langMap[ext]) {
+                            el.innerHTML = `<code class="language-${langMap[ext]}">${text}</code>`;
+                            hljs.highlightElement(el.querySelector('code'));
+                        }
+                    });
+            </script>
+        
+        {% elif 'video' in mime_type or document.original_filename|lower|slice:"-4:" in '.mp4.mkv.avi.mov.webm' %}
+            <video controls style="width: 100%; max-height: 100%;">
+                <source src="{% url 'documents:preview_content' document.id %}" type="{{ mime_type }}">
+                Your browser doesn't support video playback.
+            </video>
+        
+        {% elif 'audio' in mime_type or document.original_filename|lower|slice:"-4:" in '.mp3.wav.ogg.flac' %}
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 2rem;">
+                <div style="font-size: 4rem;">🎵</div>
+                <audio controls style="width: 80%; max-width: 500px;">
+                    <source src="{% url 'documents:preview_content' document.id %}" type="{{ mime_type }}">
+                </audio>
+            </div>
+        
+        {% elif document.original_filename|lower|slice:"-5:" == '.json' %}
+            <div class="text-preview" id="json-content">Loading...</div>
+            <script>
+                fetch('{% url 'documents:preview_content' document.id %}')
+                    .then(r => r.json())
+                    .then(data => {
+                        document.getElementById('json-content').textContent = JSON.stringify(data, null, 2);
+                    });
+            </script>
+        
+        {% elif document.original_filename|lower|slice:"-7:" == '.ipynb' %}
+            <div class="preview-unsupported">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">📓</div>
+                <h3>Jupyter Notebook</h3>
+                <p>Use <a href="https://nbviewer.org/" target="_blank">nbviewer</a> for better rendering</p>
+                {% if can_download %}
+                <a href="{% url 'documents:download' document.id %}" class="btn" style="margin-top: 1rem;">Download</a>
+                {% endif %}
+            </div>
+        
+        {% elif document.original_filename|lower|slice:"-4:" in '.stl.obj' %}
+            <div id="3d-viewer" style="width: 100%; height: 100%;"></div>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+            <script>
+                const scene = new THREE.Scene();
+                const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+                const renderer = new THREE.WebGLRenderer();
+                const container = document.getElementById('3d-viewer');
+                renderer.setSize(container.offsetWidth, container.offsetHeight);
+                container.appendChild(renderer.domElement);
+                
+                const loader = new THREE.STLLoader();
+                loader.load('{% url 'documents:preview_content' document.id %}', function(geometry) {
+                    const material = new THREE.MeshPhongMaterial({color: 0x00ff00});
+                    const mesh = new THREE.Mesh(geometry, material);
+                    scene.add(mesh);
+                    
+                    const light = new THREE.DirectionalLight(0xffffff, 1);
+                    light.position.set(1, 1, 1);
+                    scene.add(light);
+                    scene.add(new THREE.AmbientLight(0x404040));
+                    
+                    camera.position.z = 5;
+                    
+                    function animate() {
+                        requestAnimationFrame(animate);
+                        mesh.rotation.x += 0.01;
+                        mesh.rotation.y += 0.01;
+                        renderer.render(scene, camera);
+                    }
+                    animate();
+                });
+            </script>
+        
+        {% elif 'officedocument.wordprocessingml' in mime_type or 'msword' in mime_type or document.original_filename|lower|slice:"-5:" in '.docx' %}
+            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.build_absolute_uri }}{% url 'documents:preview_content' document.id %}" 
+                    class="preview-frame"></iframe>
+        
+        {% elif 'spreadsheetml' in mime_type or 'excel' in mime_type or document.original_filename|lower|slice:"-5:" in '.xlsx' %}
+            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.build_absolute_uri }}{% url 'documents:preview_content' document.id %}" 
+                    class="preview-frame"></iframe>
+        
+        {% elif 'presentation' in mime_type or document.original_filename|lower|slice:"-5:" in '.pptx' %}
+            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ request.build_absolute_uri }}{% url 'documents:preview_content' document.id %}" 
+                    class="preview-frame"></iframe>
+        
+        {% else %}
+            <div class="preview-unsupported">
+                <div style="font-size: 4rem; margin-bottom: 1rem;">📎</div>
+                <h3>Preview Not Available</h3>
+                <p>File type: {{ mime_type }}</p>
+                <p>Extension: {{ document.original_filename|slice:"-10:" }}</p>
+                {% if can_download %}
+                <a href="{% url 'documents:download' document.id %}" class="btn" style="margin-top: 1rem;">Download to View</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card" style="margin-top: 1rem;">
+    <h3>File Information</h3>
+    <table style="margin-top: 0.5rem;">
+        <tr><th style="width: 150px;">Filename</th><td>{{ document.original_filename }}</td></tr>
+        <tr><th>Size</th><td>{{ document.stored_file.file_size|filesizeformat }}</td></tr>
+        <tr><th>Type</th><td>{{ mime_type }}</td></tr>
+        <tr><th>Uploaded</th><td>{{ document.uploaded_at|date:"Y-m-d H:i:s" }}</td></tr>
+    </table>
+</div>
+{% endblock %}

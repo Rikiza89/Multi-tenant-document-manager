@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="layout-with-sidebar">
+    <!-- Sidebar with tree -->
+    <aside class="sidebar">
+        {% include 'documents/folder_tree.html' %}
+    </aside>
+    
+    <!-- Main content -->
+    <div class="main-content">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+            <div>
+                <h2>{% if current_folder %}{{ current_folder.name }}{% else %}Root{% endif %}</h2>
+                <div style="color: #666; font-size: 0.9rem; margin-top: 0.5rem;">
+                    <a href="{% url 'documents:list' %}">Root</a>
+                    {% for folder in breadcrumbs %}
+                    / <a href="{% url 'documents:folder_list' folder.id %}">{{ folder.name }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="display: flex; gap: 0.5rem;">
+                {% if current_folder %}
+                <a href="{% url 'documents:folder_create_sub' current_folder.id %}" class="btn">+ Folder</a>
+                <a href="{% url 'documents:upload_to_folder' current_folder.id %}" class="btn">+ Upload</a>
+                {% else %}
+                <a href="{% url 'documents:folder_create' %}" class="btn">+ Folder</a>
+                <a href="{% url 'documents:upload' %}" class="btn">+ Upload</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Folders</h3>
+            {% if folders %}
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                {% for folder in folders %}
+                <a href="{% url 'documents:folder_list' folder.id %}" style="text-decoration: none; color: inherit;">
+                    <div style="padding: 1.5rem; background: #f8f9fa; border-radius: 8px; text-align: center; cursor: pointer; transition: background 0.3s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                        <div style="font-size: 3rem;">📁</div>
+                        <div style="font-weight: 500; margin-top: 0.5rem;">{{ folder.name }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p style="color: #999; margin-top: 1rem;">No folders</p>
+            {% endif %}
+        </div>
+
+        <div class="card" style="margin-top: 1.5rem;">
+            <h3>Documents</h3>
+            {% if documents %}
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Filename</th>
+                        <th>Size</th>
+                        <th>Uploaded</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in documents %}
+                    <tr>
+                        <td><strong>{{ doc.title }}</strong></td>
+                        <td>{{ doc.original_filename }}</td>
+                        <td>{{ doc.stored_file.file_size|filesizeformat }}</td>
+                        <td>{{ doc.uploaded_at|date:"Y-m-d H:i" }}</td>
+                        <td>
+                            <a href="{% url 'documents:preview' doc.id %}" class="btn" style="padding: 0.5rem 1rem; font-size: 0.875rem;" target="_blank">👁 Preview</a>
+                            <a href="{% url 'documents:detail' doc.id %}" class="btn btn-secondary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p style="color: #999; margin-top: 1rem;">No documents</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

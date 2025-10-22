@@ -6,6 +6,7 @@
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
     <h2>{{ document.title }}</h2>
     <div style="display: flex; gap: 0.5rem;">
+        <a href="{% url 'documents:preview' document.id %}" class="btn" target="_blank">👁 Preview</a>
         {% if can_download %}
         <a href="{% url 'documents:download' document.id %}" class="btn">⬇ Download</a>
         {% endif %}

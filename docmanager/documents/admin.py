@@ -2,7 +2,7 @@
 Admin configuration for documents app.
 """
 from django.contrib import admin
-from .models import Role, Group, StoredFile, Document, ACL, AuditLog
+from .models import Role, Group, StoredFile, Document, ACL, AuditLog, Folder, FolderACL 
 
 
 @admin.register(Role)
@@ -18,6 +18,18 @@ class GroupAdmin(admin.ModelAdmin):
     list_filter = ['tenant']
     search_fields = ['name']
 
+
+@admin.register(Folder)
+class FolderAdmin(admin.ModelAdmin):
+    list_display = ['name', 'parent', 'tenant', 'created_by', 'created_at']
+    list_filter = ['tenant', 'created_at']
+    search_fields = ['name']
+
+@admin.register(FolderACL)
+class FolderACLAdmin(admin.ModelAdmin):
+    list_display = ['folder', 'user', 'group', 'permission', 'granted_at']
+    list_filter = ['permission', 'folder__tenant']
+    
 
 @admin.register(StoredFile)
 class StoredFileAdmin(admin.ModelAdmin):

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Create Folder {% if parent %}in {{ parent.name }}{% endif %}</h2>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Folder Name</label>
+            {{ form.name }}
+        </div>
+        {% if not parent %}
+        <div class="form-group">
+            <label>Parent Folder (optional)</label>
+            {{ form.parent }}
+        </div>
+        {% endif %}
+        <button type="submit" class="btn">Create</button>
+        <a href="{% if parent %}{% url 'documents:folder_list' parent.id %}{% else %}{% url 'documents:list' %}{% endif %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

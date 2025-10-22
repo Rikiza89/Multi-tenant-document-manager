@@ -4,8 +4,49 @@ Permission checking utilities for documents.
 from functools import wraps
 from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404
-from .models import Document, ACL, Role
+from .models import Document, ACL, Role, Folder, FolderACL
 
+def has_folder_permission(user, folder, permission_type):
+    """Check if user has permission on folder."""
+    # Owner has all permissions
+    if folder.created_by == user:
+        return True
+    
+    # Check tenant admin
+    try:
+        role = Role.objects.get(tenant=folder.tenant, user=user)
+        if role.role == Role.ADMIN:
+            return True
+    except Role.DoesNotExist:
+        pass
+    
+    # Check direct ACL
+    if FolderACL.objects.filter(folder=folder, user=user, permission=permission_type).exists():
+        return True
+    
+    # Check group ACL
+    user_groups = user.document_groups.filter(tenant=folder.tenant)
+    if FolderACL.objects.filter(folder=folder, group__in=user_groups, 
+                                permission=permission_type).exists():
+        return True
+    
+    # Check parent folder permissions (inherit)
+    if folder.parent:
+        return has_folder_permission(user, folder.parent, permission_type)
+    
+    return False
+
+def check_folder_permission(permission_type):
+    """Decorator for folder permission checking."""
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, folder_id, *args, **kwargs):
+            folder = get_object_or_404(Folder, id=folder_id, tenant=request.tenant)
+            if not has_folder_permission(request.user, folder, permission_type):
+                return HttpResponseForbidden("No permission for this folder.")
+            return view_func(request, folder_id, *args, **kwargs)
+        return wrapper
+    return decorator
 
 def check_document_permission(permission_type):
     """

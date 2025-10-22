@@ -403,6 +403,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 For issues and questions:
 - Check the troubleshooting section
 - Review test cases for usage examples
-- Consult Django documentation for framework-specific questions
+- Consult [Django](https://www.djangoproject.com/) documentation for framework-specific questions
 
 ---
+
